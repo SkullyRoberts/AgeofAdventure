@@ -1,0 +1,229 @@
+#Persistence needed: skully,nations (list of nations); taxes,[nation] (tax rates for a given nation); taxlog,[nation] (a clear-able tax log with timestamps); fulltaxlog,[nation] (a full tax log with timestamps); taxaccount,[nation] (stored value of how much money the nation has in their tax account); taxes,[player] (an relative array of how much money the player has paid in taxes to each nation, as well as the time that they last paid); fees,[nation] (stores the per-playerfees for each nation)
+
+/tax [$nation=null] = >>>
+	@nations=get_value(skully,nations)
+	if($nation=null){
+		msg(Available Nations are:)
+		foreach(@nations,@i,msg(@i))
+	}else{
+		if(array_contains_ic(@nations,$nation)=false){
+			msg(Sorry, but $nation doesn\'t match anything in the Nations list. The Available Nations are:)
+			foreach(@nations,@i,msg(@i))
+#^All deals with invalid values, as well as running the command without arguements.
+
+		}else{
+			@obalance=acc_balance(player())
+			if(has_value(taxes,$nation)=true){
+				@rate=get_value(taxes,$nation)
+			}else{
+				@rate=.05
+			}
+			@fees=0			
+			@feesarray=get_value(fees,$nation)
+			if(array_index_exists(@fees,$player)=false){
+				msg('You currently have no fees.')
+				@topay=round(multiply(@obalance,@rate))
+			}else{
+				@pfees=@feesarray[$player]
+				@feenames=array_keys(@pfees)
+				foreach(@feenames,@f){
+					@cost=@pfees[@f]
+					inc(@fees,@cost)
+					msg('You pay' @cost 'for' @f)
+				}
+				@topay=round(multiply(@obalance,@rate))+@fees
+			}
+			if(@topay>acc_balance(player())){
+				msg('Your taxes are greater than you can afford!')
+				msg('This probably means that you have a lot of fees.')
+			}else{
+#^Fee handling
+
+				acc_subtract(player(),@topay)
+				msg('Taxes subtracted successfully.')
+				if(has_value(taxaccount,$nation=false),store_value(taxaccount,$nation,0))
+				@otaxaccount=get_value(taxaccount,$nation)
+				@ntaxaccount=@otaxaccount+@topay
+				store_value(taxaccount,$nation,@ntaxaccount)
+				msg('Taxes of' @topay 'ducats successfully paid. Now logging payment to file.')
+#^actually transfers the money. The rest is for logistics			
+						
+				@timestamp=simple_date('dd.mm.yyyy')
+				@ftimestamp=cocat('[',@timestamp,']')
+#timestamp handling
+
+				if(has_value(taxes,player()=false){
+					store_value(taxes,player(),array(firstpaid:@timestamp,@nation:array(firstpaid:@timestamp)))
+				}
+#creates player relative array and the nested nation relative array if they don't have one
+
+				@playerarray=get_value(taxes,player())
+				if(array_index_exists(@playerarray,$nation)=false){
+					@nationarray=array(firstpaid:@timestamp)
+				}else{
+					@nationarray=@playerarray[$nation]
+				}
+#registers nation array, or creates it if it doesn't exist
+						
+				@pastpaid=@nationarray[totalpaid]
+				@newnationarray=array_set(
+				array_set(@nationarray,lastpaid,@timestamp),totalpaid,@pastpaid+@topay)
+#Nation array handling
+
+				@newplayerarray=array_set(@playerarray,$nation,@newnationarray)
+				store_value(taxes,player(),@newplayerarray)
+#Saving that huge relative array
+			}
+		}
+	}
+<<<
+
+
+/lasttax [$nation=null] [$player=player()] = >>>
+	@nations=get_value(skully,nations)
+	if($nation=null){
+		msg(Available Nations are:)
+		foreach(@nations,@i,msg(@i))
+	}else{
+		if(array_contains_ic(@nations,$nation)=false){
+			msg(Sorry, but $nation doesn\'t match anything in the Nations list. The Available Nations are:)
+			foreach(@nations,@i,msg(@i))
+		}else{
+			if(has_value(taxes,$player)=false){
+				msg('Sorry, but that player hasn\'t paid taxes to that nation yet.')
+#ALLLLLL the error handling (pretty much)
+
+			}else{
+				@parray=get_value(taxes,$player)
+				@timestamp=simple_date('dd.mm.yyyy')
+				@oldtimestamp=@array[$nation][lastpaid]
+				@yeardif=parse_date('yyyy',@timestamp)-parse_date('yyyy',@oldtimestamp)
+				@monthdif=multiply(@yeardif,12)+(parse_date('mm',@timestamp)-parse_date('mm',@oldtimestamp))
+				@daydif=(parse_date('dd',@timestamp)-parse_date('dd',@oldtimestamp)
+				msg($player 'last paid taxes to' $nation $monthdif 'months and' @daydif 'days ago.')
+			}
+		}
+	}
+<<<
+
+/withdrawtaxes [$nation=null] = >>>
+	if($nation=null){
+		msg(Available Nations are:)
+		foreach(@nations,@i,msg(@i))
+	}else{
+		if(array_contains_ic(@nations,$nation)=false){
+			msg(Sorry, but $nation doesn\'t match anything in the Nations list. The Available Nations are:)
+			foreach(@nations,@i,msg(@i))
+		}else{
+			if(has_permission(player(),cocat(governor,.,$nation))=false){
+				msg('Sorry, but you don\'t have permission to withdraw the taxes for' $nation)
+			}else{
+				@balance=get_value(taxaccount,$nation)
+				acc_add(player(),@balance)
+				store_value(taxaccount,$nation,0)
+				msg(@balance 'ducats withdrawn. Have a nice day!')
+			}
+		}
+	}
+<<<
+
+/settax [$nation=null] $tax = >>>
+	if($nation=null){
+		msg(Available Nations are:)
+		foreach(@nations,@i,msg(@i))
+	}else{
+		if(array_contains_ic(@nations,$nation)=false){
+			msg(Sorry, but $nation doesn\'t match anything in the Nations list. The Available Nations are:)
+			foreach(@nations,@i,msg(@i))
+		}else{
+			if(has_permission(player(),cocat(governor,.,$nation))=false){
+				msg('Sorry, but you don\'t have permission to set the tax rate for' $nation)
+			}else{
+				@old=get_value(taxes,$nation)
+				@new=$tax
+				msg('Changed tax rate for' $nation 'from' @old 'to' @new)
+			}
+		}
+	}
+<<<
+
+/fees [$nation=null] $player = >>>
+	@nations=get_value(skully,nations)
+	if($nation=null){
+		msg(Available Nations are:)
+		foreach(@nations,@i,msg(@i))
+	}else{
+		if(array_contains_ic(@nations,$nation)=false){
+			msg(Sorry, but $nation doesn\'t match anything in the Nations list. The Available Nations are:)
+			foreach(@nations,@i,msg(@i))
+		}else{
+			@fees=get_value(fees,$nation)
+			if(array_index_exists(@fees,$player)=false){
+				msg('That player currently has no fees.')
+			}else{
+				@pfees=@fees[$player]
+				@feenames=array_keys(@pfees)
+				foreach(@feenames,@f){
+					@cost=@pfees[@f]
+					msg($player 'pays' @cost 'ducats for' @f)
+				}
+			}
+		}
+	}
+<<<
+
+/addfee [$nation=null] $player [$fee=null] [$value=null] = >>>
+	@nations=get_value(skully,nations)
+	if($nation=null){
+		msg(Available Nations are:)
+		foreach(@nations,@i,msg(@i))
+	}else{
+	if($fee=null){
+		msg('Must specify a fee name!')
+	}else{
+	if($value=null){
+		msg('Must specify a fee value!')
+	}else{
+		if(array_contains_ic(@nations,$nation)=false){
+			msg(Sorry, but $nation doesn\'t match anything in the Nations list. The Available Nations are:)
+			foreach(@nations,@i,msg(@i))
+		}else{
+			@fees=get_value(fees,$nation)
+			@pfees=@fees[$player]
+			@newfees=array_set(@pfees,$fee,$value)
+			store_value(fees,$nation,set_value(@fees,$player,@newfees))
+		}
+		}
+	}
+	}
+<<<
+
+/delfee [$nation=null] $player [$fee=null] = >>>
+	@nations=get_value(skully,nations)
+	if($nation=null){
+		msg(Available Nations are:)
+		foreach(@nations,@i,msg(@i))
+	}else{
+	if($fee=null){
+		msg('Must specify a fee name!')
+	}else{
+		if(array_contains_ic(@nations,$nation)=false){
+			msg(Sorry, but $nation doesn\'t match anything in the Nations list. The Available Nations are:)
+			foreach(@nations,@i,msg(@i))
+		}else{
+			@fees=get_value(fees,$nation)
+			if(array_index_exists(@fees,$player)=false){
+				msg('That player currently has no fees.')			
+			}else{
+				@pfees=@fees[$player]
+				if(array_index_exists(@pfees,$fee)=false){
+					msg(Sorry, but that fee doesn\'t exist.)
+					msg('Use /listfees' $nation $player 'to list all the fees they have.')
+				}else{
+					@newfees=array_remove(@pfees,$fee)
+					store_value(fees,$nation,set_value(@fees,$player,@newfees))
+				}
+			}
+		}
+	}
+<<<
