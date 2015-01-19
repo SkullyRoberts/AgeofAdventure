@@ -1,0 +1,89 @@
+
+/groupkey $x  $group= >>>
+   for(@i = 1, @i <= $x, @i++){
+     @j = 0
+     while(true){
+     @target = array_get(all_players(),rand(array_size(all_players())))
+     @tgroups = pgroup(@target)
+     if(array_contains(@tgroups,$group),break())
+     }
+    sudo(/lootbox give @target key array_get(array_rand(get_value(crates,keys), 1, false),0));
+   }
+<<<  
+
+/groupcrate $x $group = >>>
+   for(@i = 0, @i < $x, @i++){
+     @j = 0
+     while(true){
+     @target = array_get(all_players(),rand(array_size(all_players())))
+     @tgroups = pgroup(@target)
+     if(array_contains(@tgroups,$group),break())
+     };
+     sudo(/lootbox give @target lootbox array_get(array_rand(get_value(crates,list), 1, false),0));
+   }
+<<<
+
+/randcrate $x = >>>
+   for(@i = 0, @i < $x, @i++){
+     sudo(/lootbox give array_get(all_players(),rand(array_size(all_players()))) lootbox array_get(array_rand(get_value(crates,list), 1, false),0));
+   }
+<<<
+/randkey $x = >>>
+   for(@i = 1, @i <= $x, @i++){
+   sudo(/lootbox give array_get(all_players(),rand(array_size(all_players()))) key array_get(array_rand(get_value(crates,keys), 1, false),0));
+   }
+<<<
+/cratefor $player $x = >>>
+   for(@i = 1, @i <= $x, @i++){
+     sudo(/lootbox give $player lootbox array_get(array_rand(get_value(crates,list), 1, false),0));
+   }
+<<<
+/keyfor $player $x = >>>
+   for(@i = 1, @i <= $x, @i++){
+     sudo(/lootbox give $player key array_get(array_rand(get_value(crates,keys), 1, false),0));
+   }
+<<<
+/test = msg(array_rand(get_value(crates,list), 1, false))
+
+/addcrate $name= >>>
+   if(has_value(crates,list)=false){
+        store_value(crates,list,array($name))
+        msg(Good Job!)
+   }else{
+   @list=get_value(crates,list)
+   if(array_contains(@list,$name)=true){
+        msg($name is already included!)
+   }else{
+   @new=array_push(@list,$name)
+   msg($name 'has been stored!')
+   store_value(crates,list,@new)
+   }}
+<<<
+/addkey $name= >>>
+   if(has_value(crates,keys)=false){
+        store_value(crates,keys,array($name))
+        msg(Good Job!)
+   }else{
+   @list=get_value(crates,keys)
+   if(array_contains(@list,$name)=true){
+        msg($name is already included!)
+   }else{
+   @new=array_push(@list,$name)
+   msg($name 'has been stored!')
+   store_value(crates,keys,@new)
+   }}
+<<<
+/crates = msg(get_value(crates,list))
+/keys = msg(get_value(crates,keys))
+
+        }
+<<<
+*:/buttons $player = >>>
+	@diff=(get_value(buttons,player()))-get_value(buttons,$player)
+	msg($player 'has pressed' get_value(buttons,$player) 'buttons.')
+	if(@diff>0,msg('You have pressed' @diff 'more buttons than them.'),msg('They have pressed' abs(@diff) 'more buttons than you! You have brought dishonor on your family! TRY HARDER!'))
+<<<
+###
+/crate $ = /lootbox give array_get(all_players(),rand(array_size(all_players()))) lootbox $
+/key $ = /lootbox give array_get(all_players(),rand(array_size(all_players()))) key $
+
